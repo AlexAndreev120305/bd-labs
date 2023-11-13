@@ -1,0 +1,13 @@
+/* выведите членов клуба, которые не арендовали объекты клуба; 
+удалите всех членов клуба, которые не арендовали объекты клуба. 
+Проверьте есть ли в клубе член с mimid = 37 */
+USE cd;
+SELECT * FROM members
+WHERE memid NOT  IN (SELECT memid FROM bookings);
+DELETE FROM members
+WHERE memid NOT IN (SELECT memid FROM bookings);
+SELECT * FROM members WHERE memid = 37;
+
+
+INSERT INTO members (memid, surname, firstname, address, zipcode, telephone, recommendedby, joindate) VALUES
+(37, 'Smith', 'Darren', '3 Funktown, Denzington, Boston', 66796, '(822) 577-3541', NULL, '2012-09-26 18:08:45');
