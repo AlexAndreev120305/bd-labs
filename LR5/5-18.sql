@@ -3,29 +3,24 @@
 Не забудьте учесть возможность того, что в день будет нулевой доход. 
 Примечание: используйте DATE_ADD для генерации серии дат.*/
 USE cd;
-SELECT date, 
-       IFNULL((SELECT SUM(IF(memid = 0, f.guestcost * b.slots, f.membercost * b.slots)) 
-               FROM facilities f 
-               INNER JOIN bookings b ON f.facid = b.facid
-               WHERE DATE(b.starttime) = date), 0) as revenue,
-       (SELECT AVG(IF(memid = 0, f.guestcost * b.slots, f.membercost * b.slots))
-               FROM facilities f  
-               INNER JOIN bookings b ON f.facid = b.facid
-               WHERE DATE(b.starttime) BETWEEN DATE_SUB(date, INTERVAL 15 DAY) AND date) as moving_average
-FROM (
-    SELECT DATE_ADD('2012-08-01', INTERVAL (a1.a + (10 * a10.a) + (100 * a100.a)) DAY) as date
-    FROM 
-    (SELECT 0 as a UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 
-     UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7
-     UNION SELECT 8 UNION SELECT 9) as a1
-    CROSS JOIN 
-    (SELECT 0 as a UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 
-     UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7
-     UNION SELECT 8 UNION SELECT 9) as a10
-    CROSS JOIN 
-    (SELECT 0 as a UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 
-     UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7
-     UNION SELECT 8 UNION SELECT 9) as a100
-) as dates
-WHERE MONTH(date) = 8 and YEAR(date) = 2012
-ORDER BY date;
+WITH RECURSIVE DateRange AS (
+    SELECT '2012-08-01' AS Date
+    UNION ALL
+    SELECT DATE_ADD(Date, INTERVAL 1 DAY) 
+    FROM DateRange 
+    WHERE Date < '2012-08-31'
+),
+TotalRevenue AS(
+SELECT DateRange.Date, 
+	Coalesce(SUM(IF(b.memid = 0, f.guestcost * b.slots, f.membercost * b.slots)), 0) as total_revenue
+    FROM DateRange
+    LEFT JOIN bookings b ON DATE(b.starttime) = Date
+    LEFT JOIN facilities f ON b.facid = f.facid
+    GROUP BY Date
+)
+SELECT 
+	DISTINCT TRD.Date, 
+	ROUND((SELECT SUM(total_revenue) FROM TotalRevenue TR WHERE TR.Date >= DATE_SUB(TRD.Date, INTERVAL 15 DAY) AND TR.Date <= TRD.Date) / 15, 4) AS moving_average_revenue
+FROM TotalRevenue TRD
+LEFT JOIN bookings b ON DATE(b.starttime) = TRD.Date
+ORDER BY TRD.Date;
