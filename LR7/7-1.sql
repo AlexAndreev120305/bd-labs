@@ -1,26 +1,15 @@
-/*
-Создайте функцию, которая рассчитывает стоимость
-каждой аренды (для каждой записи таблицы bookings).  
-*/
-
+/*Создайте функцию, которая рассчитывает стоимость 
+каждой аренды (для каждой записи таблицы bookings).*/
 USE cd;
-
 DELIMITER //
-
-DROP FUNCTION IF EXISTS cost_of //
-CREATE FUNCTION cost_of(memid INT, facid INT, slots INT) RETURNS INT
-  READS SQL DATA
-  NOT DETERMINISTIC
-  BEGIN
-    DECLARE income INT;
-    SET income = (SELECT IF(memid = 0, guestcost, membercost) * slots
-                   FROM facilities
-                   WHERE facid = facilities.facid);
-    RETURN income;
-  END //
-
+DROP FUNCTION IF EXISTS slot_cost//
+CREATE FUNCTION slot_cost(memid int, facid int, slots int) RETURNS DECIMAL (5, 2)
+DETERMINISTIC
+BEGIN 
+DECLARE cost int;
+SET cost = (SELECT IF (memid = 0, guestcost, membercost)*slots FROM facilities WHERE facid = facilities.facid);
+RETURN cost;
+END//
 DELIMITER ;
-
-SELECT cost_of(memid, facid, slots)
-  FROM bookings;
-  
+SELECT slot_cost(memid, facid, slots)
+FROM bookings;
