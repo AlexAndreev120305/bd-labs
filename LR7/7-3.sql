@@ -6,7 +6,10 @@ CREATE PROCEDURE getPayback(whichDate DATE)
     READS SQL DATA
     NOT DETERMINISTIC
 BEGIN
-    SELECT b.facid, f.facility, SUM(p.payment) - f.monthlymaintenance AS income
+    SELECT
+        b.facid
+    ,   f.facility
+    ,   SUM(p.payment) - f.monthlymaintenance AS income
     FROM bookings AS b
     JOIN payments AS p ON b.bookid = p.bookid
     JOIN facilities AS f ON b.facid = f.facid
